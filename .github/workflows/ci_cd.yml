@@ -24,7 +24,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-          pip install xgboost lightgbm
+          pip install xgboost lightgbm kaggle
           pip install -e .
 
       - name: Create required directories
@@ -32,17 +32,26 @@ jobs:
           mkdir -p logs artifacts data/raw data/processed
           mkdir -p data/new_incoming reports mlflow
 
-      - name: Run unit tests
+      - name: Download dataset from Kaggle
         run: |
-          pytest tests/unit/ -v --tb=short
+          kaggle datasets download -d blastchar/telco-customer-churn \
+            -p data/raw --unzip
+          mv data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv \
+            data/raw/churn_raw.csv
         env:
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+
+      - name: Train model to generate artifacts
+        run: |
+          python test_phase4.py
+        env:
+          MLFLOW_TRACKING_URI: sqlite:///mlflow/mlflow.db
           API_SECRET_KEY: ${{ secrets.API_SECRET_KEY }}
 
-      - name: Run integration tests
+      - name: Run unit tests
         run: |
-          pytest tests/integration/ -v --tb=short
+          pytest tests/unit/ -v --tb=short
         env:
           KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
           KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
