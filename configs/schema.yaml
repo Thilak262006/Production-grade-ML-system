@@ -1,0 +1,114 @@
+columns:
+  customerID:
+    dtype: object
+    required: true
+    is_id: true
+
+  gender:
+    dtype: object
+    required: true
+    allowed_values: ["Male", "Female"]
+
+  SeniorCitizen:
+    dtype: int64
+    required: true
+    allowed_values: [0, 1]
+
+  Partner:
+    dtype: object
+    required: true
+    allowed_values: ["Yes", "No"]
+
+  Dependents:
+    dtype: object
+    required: true
+    allowed_values: ["Yes", "No"]
+
+  tenure:
+    dtype: int64
+    required: true
+    min_value: 0
+    max_value: 100
+
+  PhoneService:
+    dtype: object
+    required: true
+    allowed_values: ["Yes", "No"]
+
+  MultipleLines:
+    dtype: object
+    required: true
+    allowed_values: ["Yes", "No", "No phone service"]
+
+  InternetService:
+    dtype: object
+    required: true
+    allowed_values: ["DSL", "Fiber optic", "No"]
+
+  OnlineSecurity:
+    dtype: object
+    required: true
+    allowed_values: ["Yes", "No", "No internet service"]
+
+  OnlineBackup:
+    dtype: object
+    required: true
+    allowed_values: ["Yes", "No", "No internet service"]
+
+  DeviceProtection:
+    dtype: object
+    required: true
+    allowed_values: ["Yes", "No", "No internet service"]
+
+  TechSupport:
+    dtype: object
+    required: true
+    allowed_values: ["Yes", "No", "No internet service"]
+
+  StreamingTV:
+    dtype: object
+    required: true
+    allowed_values: ["Yes", "No", "No internet service"]
+
+  StreamingMovies:
+    dtype: object
+    required: true
+    allowed_values: ["Yes", "No", "No internet service"]
+
+  Contract:
+    dtype: object
+    required: true
+    allowed_values: ["Month-to-month", "One year", "Two year"]
+
+  PaperlessBilling:
+    dtype: object
+    required: true
+    allowed_values: ["Yes", "No"]
+
+  PaymentMethod:
+    dtype: object
+    required: true
+    allowed_values:
+      - "Electronic check"
+      - "Mailed check"
+      - "Bank transfer (automatic)"
+      - "Credit card (automatic)"
+
+  MonthlyCharges:
+    dtype: float64
+    required: true
+    min_value: 0.0
+
+  TotalCharges:
+    dtype: object
+    required: true
+
+  Churn:
+    dtype: object
+    required: true
+    is_target: true
+    allowed_values: ["Yes", "No"]
+
+validation:
+  max_null_percentage: 5.0
+  min_rows: 100

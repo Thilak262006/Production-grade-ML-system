@@ -1,0 +1,36 @@
+project:
+  name: "Customer Churn Prediction"
+  version: "1.0.0"
+
+data:
+  raw_data_path: "data/raw/churn_raw.csv"
+  processed_dir: "data/processed"
+  train_path: "data/processed/train.csv"
+  test_path: "data/processed/test.csv"
+  val_path: "data/processed/val.csv"
+  new_incoming_path: "data/new_incoming/new_data.csv"
+  kaggle_dataset: "blastchar/telco-customer-churn"
+  kaggle_filename: "WA_Fn-UseC_-Telco-Customer-Churn.csv"
+
+artifacts:
+  dir: "artifacts"
+  model_path: "artifacts/best_model.joblib"
+  transformer_path: "artifacts/data_transformer.joblib"
+  label_encoder_path: "artifacts/label_encoder.joblib"
+
+mlflow:
+  tracking_uri: "sqlite:///mlflow/mlflow.db"
+  experiment_name: "churn_prediction"
+  registered_model_name: "ChurnModel"
+
+reports:
+  dir: "reports"
+  confusion_matrix: "reports/confusion_matrix.png"
+  roc_curve: "reports/roc_curve.png"
+  feature_importance: "reports/feature_importance.png"
+  drift_report: "reports/data_drift_report.html"
+  metrics_json: "reports/metrics.json"
+
+model:
+  target_column: "Churn"
+  customer_id_column: "customerID"

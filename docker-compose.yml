@@ -1,0 +1,49 @@
+version: "3.8"
+
+services:
+
+  # ── FastAPI Service ──────────────────────────────────────────────────────
+  api:
+    build: .
+    container_name: churn_api
+    command: uvicorn api.api_server:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    depends_on:
+      - mlflow
+    restart: unless-stopped
+
+  # ── Streamlit Service ────────────────────────────────────────────────────
+  streamlit:
+    build: .
+    container_name: churn_streamlit
+    command: streamlit run app/streamlit_app.py --server.port 8501 --server.address 0.0.0.0
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+  # ── MLflow Service ───────────────────────────────────────────────────────
+  mlflow:
+    build: .
+    container_name: churn_mlflow
+    command: mlflow ui --backend-store-uri sqlite:///mlflow/mlflow.db --host 0.0.0.0 --port 5000
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    restart: unless-stopped
+
+volumes:
+  app_data:

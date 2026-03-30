@@ -1,0 +1,99 @@
+name: Drift Monitoring Pipeline
+
+on:
+  schedule:
+    # Every day at 6:00 AM UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+    # Also allows manual trigger from GitHub UI
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install xgboost lightgbm
+          pip install -e .
+
+      - name: Create required directories
+        run: |
+          mkdir -p logs artifacts data/raw data/processed
+          mkdir -p data/new_incoming reports mlflow
+
+      - name: Download dataset from Kaggle
+        run: |
+          pip install kaggle
+          kaggle datasets download -d blastchar/telco-customer-churn \
+            -p data/raw --unzip
+          mv data/raw/WA_Fn-UseC_-Telco-Customer-Churn.csv \
+            data/raw/churn_raw.csv
+        env:
+          KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+          KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+
+      - name: Run drift detection
+        run: |
+          python -c "
+          from src.data.data_ingestion import DataIngestion
+          from src.data.data_splitting import DataSplitting
+          from src.features.feature_engineering import FeatureEngineering
+          from src.features.data_transformation import DataTransformation
+          from src.monitoring.data_drift_detection import DataDriftDetector
+          from src.monitoring.model_drift_detection import ModelDriftDetector
+          from src.utils.common import load_object
+
+          ingestion = DataIngestion()
+          df = ingestion.load_data()
+
+          splitting = DataSplitting()
+          train, test, val = splitting.split(df)
+
+          fe = FeatureEngineering()
+          train_fe = fe.engineer(train)
+          test_fe  = fe.engineer(test)
+
+          dt = DataTransformation()
+          X_train, y_train, transformer, le = dt.fit_transform(train_fe)
+          X_test, y_test = dt.transform_only(test_fe, transformer)
+
+          # Data drift
+          detector = DataDriftDetector()
+          drift_result = detector.detect(train_fe, test_fe)
+          print(f'Data drift detected: {drift_result[\"drift_detected\"]}')
+          print(f'Drifted columns: {drift_result[\"drifted_columns\"]}/{drift_result[\"total_columns\"]}')
+
+          # Model drift
+          model_detector = ModelDriftDetector()
+          model_result = model_detector.detect(X_test, y_test)
+          print(f'Model accuracy: {model_result[\"accuracy\"]}')
+          print(f'Retrain needed: {model_result[\"retrain_needed\"]}')
+
+          # Exit with error code if retraining needed
+          # This triggers GitHub Actions to send an alert email
+          if model_result['retrain_needed']:
+              print('WARNING: Model retraining needed!')
+              exit(1)
+          "
+        env:
+          MLFLOW_TRACKING_URI: sqlite:///mlflow/mlflow.db
+          API_SECRET_KEY: ${{ secrets.API_SECRET_KEY }}
+
+      - name: Upload drift reports
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: drift-reports
+          path: reports/
+          
